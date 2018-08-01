@@ -107,18 +107,18 @@ class FacetWP_Pods_Addon
 
         if ( isset( $facet['source'] ) && 0 === strpos( $facet['source'], 'pods/' ) ) {
             $props = explode( '/', $facet['source'] );
-            $pod = $props[1];
+            $pod_name = $props[1];
             $field_name = $props[2];
             $object_id = $defaults['post_id'];
 
             // get field value
-            $value = pods( $pod, $object_id )->field( array(
+            $value = pods( $pod_name, $object_id )->field( array(
                 'name' => $field_name
             ) );
 
             // get field properties
             $field = pods_api()->load_field( array(
-                'pod' => $pod,
+                'pod' => $pod_name,
                 'name' => $field_name
             ) );
 
