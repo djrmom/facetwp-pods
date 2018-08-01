@@ -69,7 +69,7 @@ class FacetWP_Pods_Addon
 
         $pods_api = pods_api();
         $pod_names = $pods_api->load_pods( array( 'names' => true ) );
-        foreach ( $pod_names as $pod_name ) {
+        foreach ( $pod_names as $pod_name => $pod_label ) {
             $pod_fields = $pods_api->load_fields( array( 'pod' => $pod_name ) );
             foreach ( $pod_fields as $field ) {
                 $fields[] = $field;
