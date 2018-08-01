@@ -13,6 +13,9 @@ defined( 'ABSPATH' ) or exit;
 class FacetWP_Pods_Addon
 {
 
+    public $fields;
+
+
     function __construct() {
         add_action( 'init', array( $this, 'init' ) );
     }
@@ -26,23 +29,59 @@ class FacetWP_Pods_Addon
     }
 
 
-    function facet_sources() {
+    /**
+     * @todo Populate the facet "Data source" dropdown with Pods fields
+     */
+    function facet_sources( $sources ) {
+        $fields = $this->get_fields();
+
+        $sources['pods'] = array(
+            'label' => 'Pods',
+            'choices' => array(),
+            'weight' => 5
+        );
+
+        // This needs to be re-written for Pods
+        foreach ( $fields as $field ) {
+            $field_id = $field['hierarchy'];
+            $field_label = '[' . $field['group_title'] . '] ' . $field['parents'] . $field['label'];
+            $sources['pods']['choices'][ "pods/$field_id" ] = $field_label;
+        }
+
+        return $sources;
+    }
+
+
+    /**
+     * Hijack the "facetwp_indexer_query_args" hook to lookup the fields once
+     */
+    function lookup_pods_fields( $args ) {
+        $this->fields = $this->get_fields();
+        return $args;
+    }
+
+
+    /**
+     * @todo Get all Pods fields
+     */
+    function get_fields() {
 
     }
 
 
-    function lookup_pods_fields() {
-
+    /**
+     * @todo Index Pods data
+     */
+    function index_pods_values( $return, $params ) {
+        return $return;
     }
 
 
-    function index_pods_values() {
-
-    }
-
-
-    function index_source_other() {
-        
+    /**
+     * @todo account for Pods fields as the facet "source_other"
+     */
+    function index_source_other( $value, $params ) {
+        return $value;
     }
 }
 
