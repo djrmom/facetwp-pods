@@ -62,7 +62,7 @@ class FacetWP_Pods_Addon
     /**
      * Hijack the "facetwp_indexer_query_args" hook to lookup the fields once
      */
-    function lookup_pods_fields( $args ) {
+    public function lookup_pods_fields( $args ) {
         $this->fields = $this->get_fields();
 
         return $args;
@@ -74,7 +74,7 @@ class FacetWP_Pods_Addon
      *
      * @return array Pods fields.
      */
-    function get_fields() {
+    public function get_fields() {
         $fields = array();
 
         $params = array(
@@ -101,15 +101,139 @@ class FacetWP_Pods_Addon
     /**
      * @todo Index Pods data
      */
-    function index_pods_values( $return, $params ) {
+    public function index_pods_values( $return, $params ) {
+        $defaults = $params['defaults'];
+        $facet = $params['facet'];
+
+        if ( isset( $facet['source'] ) && 0 === strpos( $facet['source'], 'pods/' ) ) {
+            $props = explode( '/', $facet['source'] );
+            $pod = $props[1];
+            $field_name = $props[2];
+            $object_id = $defaults['post_id'];
+
+            // get field value
+            $value = pods( $pod, $object_id )->field( array(
+                'name' => $field_name
+            ) );
+
+            // get field properties
+            $field = pods_api()->load_field( array(
+                'pod' => $pod,
+                'name' => $field_name
+            ) );
+
+            // index values
+            $this->index_field_value( $value, $field, $defaults );
+
+            return true;
+        }
+
         return $return;
+    }
+
+
+    /**
+     * @todo index values depending on the field type
+     */
+    public function index_field_value( $value, $field, $params ) {
+        $value = maybe_unserialize( $value );
+
+        // checkboxes
+        if ( 'checkbox' == $field['type'] || 'select' == $field['type'] || 'radio' == $field['type'] ) {
+            if ( false !== $value ) {
+                foreach ( (array) $value as $val ) {
+                    $display_value = isset( $field['choices'][ $val ] ) ?
+                        $field['choices'][ $val ] :
+                        $val;
+
+                    $params['facet_value'] = $val;
+                    $params['facet_display_value'] = $display_value;
+                    FWP()->indexer->index_row( $params );
+                }
+            }
+        }
+
+        // relationship
+        elseif ( 'relationship' == $field['type'] || 'post_object' == $field['type'] ) {
+            if ( false !== $value ) {
+                foreach ( (array) $value as $val ) {
+                    $params['facet_value'] = $val;
+                    $params['facet_display_value'] = get_the_title( $val );
+                    FWP()->indexer->index_row( $params );
+                }
+            }
+        }
+
+        // user
+        elseif ( 'user' == $field['type'] ) {
+            if ( false !== $value )  {
+                foreach ( (array) $value as $val ) {
+                    $user = get_user_by( 'id', $val );
+                    if ( false !== $user ) {
+                        $params['facet_value'] = $val;
+                        $params['facet_display_value'] = $user->display_name;
+                        FWP()->indexer->index_row( $params );
+                    }
+                }
+            }
+        }
+
+        // taxonomy
+        elseif ( 'taxonomy' == $field['type'] ) {
+            if ( ! empty( $value ) ) {
+                foreach ( (array) $value as $val ) {
+                    global $wpdb;
+
+                    $term_id = (int) $val;
+                    $term = $wpdb->get_row( "SELECT name, slug FROM {$wpdb->terms} WHERE term_id = '$term_id' LIMIT 1" );
+                    if ( null !== $term ) {
+                        $params['facet_value'] = $term->slug;
+                        $params['facet_display_value'] = $term->name;
+                        $params['term_id'] = $term_id;
+                        FWP()->indexer->index_row( $params );
+                    }
+                }
+            }
+        }
+
+        // date_picker
+        elseif ( 'date_picker' == $field['type'] ) {
+            $formatted = $this->format_date( $value );
+            $params['facet_value'] = $formatted;
+            $params['facet_display_value'] = apply_filters( 'facetwp_acf_display_value', $formatted, $params );
+            FWP()->indexer->index_row( $params );
+        }
+
+        // true_false
+        elseif ( 'true_false' == $field['type'] ) {
+            $display_value = ( 0 < (int) $value ) ? __( 'Yes', 'fwp' ) : __( 'No', 'fwp' );
+            $params['facet_value'] = $value;
+            $params['facet_display_value'] = $display_value;
+            FWP()->indexer->index_row( $params );
+        }
+
+        // google_map
+        elseif ( 'google_map' == $field['type'] ) {
+            if ( isset( $value['lat'] ) && isset( $value['lng'] ) ) {
+                $params['facet_value'] = $value['lat'];
+                $params['facet_display_value'] = $value['lng'];
+                FWP()->indexer->index_row( $params );
+            }
+        }
+
+        // text
+        else {
+            $params['facet_value'] = $value;
+            $params['facet_display_value'] = apply_filters( 'facetwp_acf_display_value', $value, $params );
+            FWP()->indexer->index_row( $params );
+        }
     }
 
 
     /**
      * @todo account for Pods fields as the facet "source_other"
      */
-    function index_source_other( $value, $params ) {
+    public function index_source_other( $value, $params ) {
         return $value;
     }
 }
