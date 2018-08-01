@@ -19,6 +19,30 @@ class FacetWP_Pods_Addon
 
 
     function init() {
+        add_filter( 'facetwp_facet_sources', array( $this, 'facet_sources' ) );
+        add_filter( 'facetwp_indexer_query_args', array( $this, 'lookup_pods_fields' ) );
+        add_filter( 'facetwp_indexer_post_facet', array( $this, 'index_pods_values' ), 1, 2 );
+        add_filter( 'facetwp_acf_display_value', array( $this, 'index_source_other' ), 1, 2 );
+    }
+
+
+    function facet_sources() {
+
+    }
+
+
+    function lookup_pods_fields() {
+
+    }
+
+
+    function index_pods_values() {
+
+    }
+
+
+    function index_source_other() {
+        
     }
 }
 
