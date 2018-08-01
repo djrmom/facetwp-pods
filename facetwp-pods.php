@@ -12,16 +12,18 @@ defined( 'ABSPATH' ) or exit;
 
 class FacetWP_Pods_Addon
 {
+    /**
+     * @var array Fields data.
+     */
+    public $fields = array();
 
-    public $fields;
 
-
-    function __construct() {
+    public function __construct() {
         add_action( 'init', array( $this, 'init' ) );
     }
 
 
-    function init() {
+    public function init() {
         add_filter( 'facetwp_facet_sources', array( $this, 'facet_sources' ) );
         add_filter( 'facetwp_indexer_query_args', array( $this, 'lookup_pods_fields' ) );
         add_filter( 'facetwp_indexer_post_facet', array( $this, 'index_pods_values' ), 1, 2 );
@@ -30,10 +32,16 @@ class FacetWP_Pods_Addon
 
 
     /**
-     * @todo Populate the facet "Data source" dropdown with Pods fields
+     * Add Pods fields to sources list.
+     *
+     * @param $sources Sources list.
+     *
+     * @return array Sources list with Pods fields added.
      */
-    function facet_sources( $sources ) {
-        $fields = $this->get_fields();
+    public function facet_sources( $sources ) {
+        if ( empty( $this->fields ) ) {
+            $this->fields = $this->get_fields();
+        }
 
         $sources['pods'] = array(
             'label' => 'Pods',
@@ -41,11 +49,10 @@ class FacetWP_Pods_Addon
             'weight' => 5
         );
 
-        // This needs to be re-written for Pods
-        foreach ( $fields as $field ) {
-            $field_id = $field['hierarchy'];
-            $field_label = '[' . $field['group_title'] . '] ' . $field['parents'] . $field['label'];
-            $sources['pods']['choices'][ "pods/$field_id" ] = $field_label;
+        foreach ( $this->fields as $choice_id => $field ) {
+            $choice_label = sprintf( '[%1$s] %2$s', $field['pod_label'], $field['label'] );
+
+            $sources['pods']['choices'][ $choice_id ] = $choice_label;
         }
 
         return $sources;
@@ -57,22 +64,33 @@ class FacetWP_Pods_Addon
      */
     function lookup_pods_fields( $args ) {
         $this->fields = $this->get_fields();
+
         return $args;
     }
 
 
     /**
-     * Get all Pods fields
+     * Get all post type Pods fields.
+     *
+     * @return array Pods fields.
      */
     function get_fields() {
         $fields = array();
 
-        $pods_api = pods_api();
-        $pod_names = $pods_api->load_pods( array( 'names' => true ) );
-        foreach ( $pod_names as $pod_name => $pod_label ) {
-            $pod_fields = $pods_api->load_fields( array( 'pod' => $pod_name ) );
-            foreach ( $pod_fields as $field ) {
-                $fields[] = $field;
+        $params = array(
+            'type'       => 'post_type',
+            'table_info' => false,
+        );
+
+        $post_type_pods = pods_api()->load_pods( $params );
+
+        foreach ( $post_type_pods as $pod ) {
+            foreach ( $pod['fields'] as $field ) {
+                $field['pod_label'] = $pod['label'];
+            
+                $choice_id = sprintf( 'pods/%1$s/%2$s', $field['pod'], $field['name'] );
+                
+                $fields[ $choice_id ] = $field;
             }
         }
 
