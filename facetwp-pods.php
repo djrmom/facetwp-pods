@@ -39,6 +39,10 @@ class FacetWP_Pods_Addon {
 	 * @since 0.1
 	 */
 	public function init() {
+		if ( ! defined( 'PODS_VERSION' ) ) {
+			return;
+		}
+
 		add_filter( 'facetwp_facet_sources', array( $this, 'facet_sources' ) );
 		add_filter( 'facetwp_indexer_query_args', array( $this, 'lookup_fields' ) );
 		add_filter( 'facetwp_indexer_row_data', array( $this, 'get_index_rows' ), 1, 2 );
