@@ -64,7 +64,7 @@ class FacetWP_Pods_Addon {
 		$sources['pods'] = array(
 			'label'   => 'Pods',
 			'choices' => array(),
-			'weight'  => 5
+			'weight'  => 25,
 		);
 
 		foreach ( $this->fields as $choice_id => $field ) {
