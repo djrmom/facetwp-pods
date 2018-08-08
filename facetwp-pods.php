@@ -2,7 +2,7 @@
 /*
 Plugin Name: FacetWP - Pods integration
 Description: Pods integration with FacetWP
-Version: 0.1
+Version: 1.0
 Author: FacetWP, LLC
 Author URI: https://facetwp.com/
 GitHub URI: facetwp/facetwp-pods
