@@ -449,8 +449,11 @@ class FacetWP_Pods_Addon {
                         $pod_value = '<a href="' . $file . '">' . $pod_value . '</a>';
                     }
                 }
-            }
-            else {
+
+            } elseif ( 'code' == $field_type ) {
+	            $pod_value = '<code>' . esc_textarea( $pod->field( $field_name, true, true ) ) . '</code>';
+
+            } else {
                 $pod_value = $pod->display( $field_name );
             }
 
