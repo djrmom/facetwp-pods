@@ -434,7 +434,10 @@ class FacetWP_Pods_Addon {
 
                 if ( ! empty( $check ) ) {
                     if ( 0 === strpos( $check['type'], 'image/' ) ) {
-                        $pod_value = pods_image( $file, 'thumbnail' );
+	                    $images = explode( " ", $file);
+	                    foreach ( $images AS $image ) {
+		                    $pod_value .= pods_image( $image, 'thumbnail' );
+	                    }
                     }
                     elseif ( 0 === strpos( $check['type'], 'video/' ) ) {
                         $pod_value = pods_video( $file );
